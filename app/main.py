@@ -262,8 +262,9 @@ class FileEdit(BaseModel):
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(
+        request,
         "index.html",
-        {"request": request, "claude_home": str(_claude_home())},
+        context={"claude_home": str(_claude_home())},
     )
 
 
