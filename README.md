@@ -326,54 +326,7 @@ If you want extra protection on GitHub, in repo Settings → Code security:
 
 ---
 
-## Roadmap
-
-- [x] Edit SKILL.md inline
-- [x] Tags / categories sidebar
-- [x] Bulk import from marketplace repo
-- [x] Validation / lint
-- [x] Stats bar
-- [ ] Diff view between local and upstream Git versions
-- [ ] Export selected skills as a single shareable ZIP
-- [ ] Import skill from URL pointing at a single SKILL.md
-- [ ] Optional read-only mode
-
 PRs welcome — see [`CONTRIBUTING.md`](CONTRIBUTING.md).
-
----
-
-## Updating
-
-Pull the latest version and re-run the installer for your platform. Installers are idempotent — they refresh the desktop entry / app bundle / Start Menu shortcut without touching anything inside `~/.claude/`.
-
-### Linux
-
-```bash
-cd ~/claude-control
-python3 launcher.py --stop          # if a previous instance is running
-git pull
-./install.sh
-```
-
-### macOS
-
-```bash
-cd ~/claude-control
-python3 launcher.py --stop
-git pull
-./install-macos.sh
-```
-
-### Windows (PowerShell)
-
-```powershell
-cd $HOME\claude-control
-python3 launcher.py --stop
-git pull
-.\install.ps1
-```
-
-If you have an old clone in a different directory, stop its server too — otherwise the launcher will see the existing PID file and just reopen the old instance.
 
 ---
 
