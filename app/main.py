@@ -145,10 +145,82 @@ def _normalize_tags(raw) -> list[str]:
     return []
 
 
+def _scan_plugins_from_manifest() -> list[dict]:
+    """Discover installed plugins from ~/.claude/plugins/installed_plugins.json."""
+    manifest_path = _claude_home() / "plugins" / "installed_plugins.json"
+    if not manifest_path.exists():
+        return []
+    try:
+        manifest = json.loads(manifest_path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return []
+
+    plugins = manifest.get("plugins", {})
+    if not isinstance(plugins, dict):
+        return []
+
+    out: list[dict] = []
+    for key, entries in plugins.items():
+        if not entries:
+            continue
+        entry = entries[0] if isinstance(entries, list) else entries
+        install_path = Path(entry.get("installPath", ""))
+        plugin_name = key.split("@")[0] if "@" in key else key
+        marketplace = key.split("@")[1] if "@" in key else ""
+
+        description = ""
+        tags: list[str] = []
+        if install_path.exists():
+            pkg_json = install_path / "package.json"
+            if pkg_json.exists():
+                try:
+                    pkg = json.loads(pkg_json.read_text())
+                    description = (pkg.get("description") or "").strip()
+                    tags = _normalize_tags(pkg.get("keywords") or [])
+                except (json.JSONDecodeError, OSError):
+                    pass
+            if not description:
+                plugin_json = install_path / ".claude-plugin" / "plugin.json"
+                if plugin_json.exists():
+                    try:
+                        pj = json.loads(plugin_json.read_text())
+                        description = (pj.get("description") or "").strip()
+                    except (json.JSONDecodeError, OSError):
+                        pass
+
+        try:
+            stat = install_path.stat() if install_path.exists() else None
+            modified = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat() if stat else ""
+            size = _dir_size(install_path) if install_path.exists() else 0
+        except OSError:
+            modified = ""
+            size = 0
+
+        out.append({
+            "name": plugin_name,
+            "description": description[:240],
+            "path": str(install_path.relative_to(_claude_home())) if (install_path.exists() and install_path.is_relative_to(_claude_home())) else (str(install_path) if install_path.exists() else key),
+            "kind": "plugins",
+            "state": "on",
+            "is_dir": True,
+            "tags": tags,
+            "size": size,
+            "modified": modified,
+            "editable": False,
+            "version": entry.get("version", ""),
+            "marketplace": marketplace,
+            "installed_at": entry.get("installedAt", ""),
+        })
+    return out
+
+
 def _scan_kind(kind: str) -> list[dict]:
     d = _kind_dir(kind)
     overrides = _read_settings().get("skillOverrides", {}) if kind == "skills" else {}
     out: list[dict] = []
+
+    if kind == "plugins":
+        out.extend(_scan_plugins_from_manifest())
 
     for entry in sorted(d.iterdir()):
         if entry.name.startswith("."):

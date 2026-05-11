@@ -102,11 +102,16 @@ function basenameFromPath(path) {
 function card(it) {
   const stateClass = `state-${it.state.replace(" ", "-")}`;
   const isSkill = it.kind === "skills";
+  const isPlugin = it.kind === "plugins";
   const desc = it.description ? escapeHtml(it.description) : '<em style="opacity:0.5">no description</em>';
   const tagsHtml = it.tags.length
     ? `<div class="card-tags">${it.tags.map((t) => `<span class="tag-pill">${escapeHtml(t)}</span>`).join("")}</div>`
     : "";
   const meta = `<div class="card-meta"><span>${formatBytes(it.size)}</span><span>${formatDate(it.modified)}</span></div>`;
+
+  const pluginInfo = isPlugin && (it.version || it.marketplace)
+    ? `<div class="card-meta"><span>v${escapeHtml(it.version || "?")}</span><span>@${escapeHtml(it.marketplace || "?")}</span></div>` : "";
+
   const base = basenameFromPath(it.path);
 
   const stateButtons = isSkill ? `
@@ -128,12 +133,13 @@ function card(it) {
       <p class="card-desc">${desc}</p>
       ${tagsHtml}
       ${meta}
+      ${pluginInfo}
       <div class="card-path">${escapeHtml(it.path)}</div>
       <div class="card-footer">
         ${stateButtons}
         ${editBtn}
         ${validateBtn}
-        <button class="btn danger" data-act="delete" data-kind="${it.kind}" data-base="${escapeAttr(base)}" data-path="${escapeAttr(it.path)}">delete</button>
+        ${(isPlugin && it.version) ? "" : `<button class="btn danger" data-act="delete" data-kind="${it.kind}" data-base="${escapeAttr(base)}" data-path="${escapeAttr(it.path)}">delete</button>`}
       </div>
     </article>`;
 }
