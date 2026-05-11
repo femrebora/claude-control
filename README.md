@@ -379,7 +379,10 @@ If you have an old clone in a different directory, stop its server too — other
 
 ## Uninstalling
 
-Each platform ships with a matching uninstaller. They remove only the desktop entry / app bundle / Start Menu shortcut. Your `~/.claude/` directory — skills, plugins, settings, everything — is **never** touched.
+> **Always run the uninstall script before deleting the project folder.**
+> The script stops the running server, removes the desktop entry / app bundle / Start Menu shortcut, and refreshes the system icon cache. If you delete the project folder first, you'll be left with an orphaned launcher icon that points nowhere — see [Recovery](#recovery-i-already-deleted-the-folder) below.
+>
+> The uninstaller **never** touches `~/.claude/` (your skills, plugins, agents, commands, and settings). Reinstalling later picks up exactly where you left off.
 
 ### Linux
 
@@ -402,14 +405,34 @@ cd $HOME\claude-control
 .\uninstall.ps1
 ```
 
-To also delete the cloned source folder afterwards:
+After the uninstaller finishes, the project folder is no longer registered with your OS and can be deleted whenever you like with your normal file manager (Files / Finder / Explorer). Nothing on your system references it anymore.
+
+### Recovery: I already deleted the folder
+
+If you removed the project folder before running the uninstaller, the desktop launcher entry and icon are now orphaned. Remove them by hand:
+
+**Linux**
 
 ```bash
-rm -rf ~/claude-control                       # Linux / macOS
-Remove-Item -Recurse $HOME\claude-control     # PowerShell
+rm -f ~/.local/share/applications/claude-control.desktop
+rm -f ~/.local/share/icons/hicolor/256x256/apps/claude-control.png
+update-desktop-database ~/.local/share/applications 2>/dev/null || true
+gtk-update-icon-cache -f -t ~/.local/share/icons/hicolor 2>/dev/null || true
 ```
 
-Your managed `~/.claude/` directory is preserved regardless.
+**macOS**
+
+```bash
+rm -rf "$HOME/Applications/Claude Control.app"
+```
+
+**Windows (PowerShell)**
+
+```powershell
+Remove-Item "$HOME\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Claude Control.lnk" -ErrorAction SilentlyContinue
+```
+
+Your `~/.claude/` directory is preserved regardless.
 
 ---
 
