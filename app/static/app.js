@@ -17,6 +17,7 @@ const tabs = $("tabs");
 const zipUpload = $("zip-upload");
 const cloneBtn = $("clone-btn");
 const bulkBtn = $("bulk-btn");
+const refreshBtn = $("refresh-btn");
 
 // --- API helper ---
 async function api(path, opts = {}) {
@@ -434,6 +435,33 @@ $("bulk-go").addEventListener("click", async () => {
   } catch (e) {
     $("bulk-result").innerHTML = `<div class="issue error">${escapeHtml(e.message)}</div>`;
   }
+});
+
+// --- Auto-refresh (manual button + window focus / tab visibility) ---
+
+let refreshing = false;
+async function refreshOnce(source) {
+  if (refreshing) return;
+  refreshing = true;
+  if (refreshBtn) refreshBtn.disabled = true;
+  try {
+    await refresh();
+    if (source === "manual") toast("refreshed", "ok");
+  } finally {
+    refreshing = false;
+    if (refreshBtn) refreshBtn.disabled = false;
+  }
+}
+
+if (refreshBtn) {
+  refreshBtn.addEventListener("click", () => refreshOnce("manual"));
+}
+
+// Re-scan when the user returns to the tab/window (clicking the app icon
+// while the dashboard is already open counts as a focus event).
+window.addEventListener("focus", () => refreshOnce("focus"));
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") refreshOnce("visibility");
 });
 
 // --- Toast ---

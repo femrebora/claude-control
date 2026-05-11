@@ -342,6 +342,77 @@ PRs welcome — see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ---
 
+## Updating
+
+Pull the latest version and re-run the installer for your platform. Installers are idempotent — they refresh the desktop entry / app bundle / Start Menu shortcut without touching anything inside `~/.claude/`.
+
+### Linux
+
+```bash
+cd ~/claude-control
+python3 launcher.py --stop          # if a previous instance is running
+git pull
+./install.sh
+```
+
+### macOS
+
+```bash
+cd ~/claude-control
+python3 launcher.py --stop
+git pull
+./install-macos.sh
+```
+
+### Windows (PowerShell)
+
+```powershell
+cd $HOME\claude-control
+python3 launcher.py --stop
+git pull
+.\install.ps1
+```
+
+If you have an old clone in a different directory, stop its server too — otherwise the launcher will see the existing PID file and just reopen the old instance.
+
+---
+
+## Uninstalling
+
+Each platform ships with a matching uninstaller. They remove only the desktop entry / app bundle / Start Menu shortcut. Your `~/.claude/` directory — skills, plugins, settings, everything — is **never** touched.
+
+### Linux
+
+```bash
+cd ~/claude-control
+./uninstall.sh
+```
+
+### macOS
+
+```bash
+cd ~/claude-control
+./uninstall-macos.sh
+```
+
+### Windows (PowerShell)
+
+```powershell
+cd $HOME\claude-control
+.\uninstall.ps1
+```
+
+To also delete the cloned source folder afterwards:
+
+```bash
+rm -rf ~/claude-control                       # Linux / macOS
+Remove-Item -Recurse $HOME\claude-control     # PowerShell
+```
+
+Your managed `~/.claude/` directory is preserved regardless.
+
+---
+
 ## License
 
 [MIT](LICENSE).
