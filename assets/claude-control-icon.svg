@@ -1,0 +1,53 @@
+<svg viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="copperGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E0A878" />
+      <stop offset="100%" stop-color="#C88850" />
+    </linearGradient>
+    <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="8"/>
+      <feOffset dx="0" dy="4" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#softShadow)">
+    <rect x="140" y="180" width="744" height="664" rx="40" fill="url(#copperGradient)" opacity="0.85"/>
+    <rect x="160" y="200" width="704" height="624" rx="32" fill="#1F2937"/>
+    <rect x="160" y="200" width="704" height="100" rx="32" fill="url(#copperGradient)" opacity="0.15"/>
+    <rect x="200" y="235" width="130" height="48" rx="12" fill="url(#copperGradient)" opacity="0.9"/>
+    <rect x="350" y="235" width="130" height="48" rx="12" fill="#F5F1ED" opacity="0.1"/>
+    <rect x="500" y="235" width="130" height="48" rx="12" fill="#F5F1ED" opacity="0.1"/>
+    <rect x="650" y="235" width="130" height="48" rx="12" fill="#F5F1ED" opacity="0.1"/>
+    <rect x="200" y="360" width="380" height="56" rx="12" fill="#F5F1ED" opacity="0.06"/>
+    <circle cx="790" cy="388" r="22" fill="#F5F1ED" opacity="0.2"/>
+    <circle cx="802" cy="388" r="16" fill="url(#copperGradient)"/>
+    <rect x="200" y="445" width="380" height="56" rx="12" fill="#F5F1ED" opacity="0.06"/>
+    <circle cx="790" cy="473" r="22" fill="#F5F1ED" opacity="0.2"/>
+    <circle cx="802" cy="473" r="16" fill="url(#copperGradient)"/>
+    <rect x="200" y="530" width="380" height="56" rx="12" fill="#F5F1ED" opacity="0.06"/>
+    <circle cx="790" cy="558" r="22" fill="#F5F1ED" opacity="0.2"/>
+    <circle cx="778" cy="558" r="16" fill="#3B4A5C" opacity="0.6"/>
+    <rect x="200" y="615" width="380" height="56" rx="12" fill="#F5F1ED" opacity="0.06"/>
+    <circle cx="790" cy="643" r="22" fill="#F5F1ED" opacity="0.2"/>
+    <circle cx="802" cy="643" r="16" fill="url(#copperGradient)"/>
+    <rect x="200" y="700" width="380" height="56" rx="12" fill="#F5F1ED" opacity="0.06"/>
+    <circle cx="790" cy="728" r="22" fill="#F5F1ED" opacity="0.2"/>
+    <circle cx="802" cy="728" r="16" fill="url(#copperGradient)"/>
+    <circle cx="225" cy="388" r="6" fill="url(#copperGradient)" opacity="0.6"/>
+    <circle cx="225" cy="473" r="6" fill="url(#copperGradient)" opacity="0.6"/>
+    <circle cx="225" cy="558" r="6" fill="url(#copperGradient)" opacity="0.4"/>
+    <circle cx="225" cy="643" r="6" fill="url(#copperGradient)" opacity="0.6"/>
+    <circle cx="225" cy="728" r="6" fill="url(#copperGradient)" opacity="0.6"/>
+    <line x1="255" y1="388" x2="480" y2="388" stroke="#F5F1ED" stroke-width="5" stroke-linecap="round" opacity="0.15"/>
+    <line x1="255" y1="473" x2="520" y2="473" stroke="#F5F1ED" stroke-width="5" stroke-linecap="round" opacity="0.15"/>
+    <line x1="255" y1="558" x2="450" y2="558" stroke="#F5F1ED" stroke-width="5" stroke-linecap="round" opacity="0.15"/>
+    <line x1="255" y1="643" x2="540" y2="643" stroke="#F5F1ED" stroke-width="5" stroke-linecap="round" opacity="0.15"/>
+    <line x1="255" y1="728" x2="500" y2="728" stroke="#F5F1ED" stroke-width="5" stroke-linecap="round" opacity="0.15"/>
+  </g>
+</svg>

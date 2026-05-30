@@ -14,6 +14,7 @@ When you start collecting skills, you lose track of what's installed, what's on,
 
 It runs entirely on your machine. No telemetry, no remote calls, no auth needed because it binds to `127.0.0.1` only.
 
+<img src="assets/claude-control-icon.svg" width="128" alt="claude-control icon" />
 ![dashboard preview](assets/icon.png)
 
 ---

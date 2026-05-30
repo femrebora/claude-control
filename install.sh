@@ -57,9 +57,10 @@ if command -v desktop-file-validate >/dev/null; then
   desktop-file-validate "$DESKTOP_FILE" 2>/dev/null || true
 fi
 
-# 5. icon
+# 5. icons
 mkdir -p "$ICONS_DIR"
 cp "$PROJECT_DIR/assets/icon.png" "$ICONS_DIR/claude-control.png"
+cp "$PROJECT_DIR/assets/claude-control-icon.svg" "$ICONS_DIR/claude-control.svg"
 
 # 6. refresh app database (best-effort; silently OK if not available)
 if command -v update-desktop-database >/dev/null; then

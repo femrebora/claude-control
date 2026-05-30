@@ -6,7 +6,7 @@ GenericName=Claude Code asset manager
 Comment=Manage your ~/.claude/ skills, plugins, agents, and commands
 # __INSTALL_PATH__ is replaced by install.sh
 Exec=__INSTALL_PATH__/.venv/bin/python __INSTALL_PATH__/launcher.py
-Icon=__INSTALL_PATH__/assets/icon.png
+Icon=__INSTALL_PATH__/assets/claude-control-icon.svg
 Terminal=false
 Categories=Development;
 StartupNotify=true

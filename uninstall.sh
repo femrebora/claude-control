@@ -14,6 +14,7 @@ fi
 
 rm -f "$APPS_DIR/claude-control.desktop"
 rm -f "$ICONS_DIR/claude-control.png"
+rm -f "$ICONS_DIR/claude-control.svg"
 
 if command -v update-desktop-database >/dev/null; then
   update-desktop-database "$APPS_DIR" 2>/dev/null || true
