@@ -40,8 +40,6 @@
     </filter>
   </defs>
 
-  <rect width="1024" height="1024" fill="#020304"/>
-
   <g filter="url(#outerShadow)">
     <rect x="128" y="150" width="768" height="724" rx="56" fill="url(#copperGradient)"/>
     <rect x="154" y="176" width="716" height="672" rx="42" fill="url(#panelGradient)"/>
