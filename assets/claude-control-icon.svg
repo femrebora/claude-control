@@ -1,53 +1,98 @@
-<svg viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="claude-control icon">
   <defs>
-    <linearGradient id="copperGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#E0A878" />
-      <stop offset="100%" stop-color="#C88850" />
+    <linearGradient id="copperGradient" x1="512" y1="130" x2="512" y2="894" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F0B77E"/>
+      <stop offset="48%" stop-color="#D99A5E"/>
+      <stop offset="100%" stop-color="#B8733F"/>
     </linearGradient>
-    <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="8"/>
-      <feOffset dx="0" dy="4" result="offsetblur"/>
-      <feComponentTransfer>
-        <feFuncA type="linear" slope="0.3"/>
-      </feComponentTransfer>
-      <feMerge>
-        <feMergeNode/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
+
+    <linearGradient id="panelGradient" x1="512" y1="190" x2="512" y2="834" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#263241"/>
+      <stop offset="45%" stop-color="#172332"/>
+      <stop offset="100%" stop-color="#101A27"/>
+    </linearGradient>
+
+    <linearGradient id="headerGradient" x1="512" y1="206" x2="512" y2="318" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#343943"/>
+      <stop offset="100%" stop-color="#252A33"/>
+    </linearGradient>
+
+    <linearGradient id="rowGradient" x1="200" y1="0" x2="620" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#354150" stop-opacity="0.72"/>
+      <stop offset="100%" stop-color="#2A3543" stop-opacity="0.52"/>
+    </linearGradient>
+
+    <linearGradient id="inactiveGradient" x1="350" y1="235" x2="780" y2="283" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.07"/>
+    </linearGradient>
+
+    <filter id="outerShadow" x="72" y="116" width="880" height="820" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#000000" flood-opacity="0.34"/>
+    </filter>
+
+    <filter id="innerSoftness" x="150" y="190" width="724" height="644" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#000000" flood-opacity="0.18"/>
+    </filter>
+
+    <filter id="knobShadow" x="-40%" y="-40%" width="180%" height="180%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000000" flood-opacity="0.25"/>
     </filter>
   </defs>
-  <g filter="url(#softShadow)">
-    <rect x="140" y="180" width="744" height="664" rx="40" fill="url(#copperGradient)" opacity="0.85"/>
-    <rect x="160" y="200" width="704" height="624" rx="32" fill="#1F2937"/>
-    <rect x="160" y="200" width="704" height="100" rx="32" fill="url(#copperGradient)" opacity="0.15"/>
-    <rect x="200" y="235" width="130" height="48" rx="12" fill="url(#copperGradient)" opacity="0.9"/>
-    <rect x="350" y="235" width="130" height="48" rx="12" fill="#F5F1ED" opacity="0.1"/>
-    <rect x="500" y="235" width="130" height="48" rx="12" fill="#F5F1ED" opacity="0.1"/>
-    <rect x="650" y="235" width="130" height="48" rx="12" fill="#F5F1ED" opacity="0.1"/>
-    <rect x="200" y="360" width="380" height="56" rx="12" fill="#F5F1ED" opacity="0.06"/>
-    <circle cx="790" cy="388" r="22" fill="#F5F1ED" opacity="0.2"/>
-    <circle cx="802" cy="388" r="16" fill="url(#copperGradient)"/>
-    <rect x="200" y="445" width="380" height="56" rx="12" fill="#F5F1ED" opacity="0.06"/>
-    <circle cx="790" cy="473" r="22" fill="#F5F1ED" opacity="0.2"/>
-    <circle cx="802" cy="473" r="16" fill="url(#copperGradient)"/>
-    <rect x="200" y="530" width="380" height="56" rx="12" fill="#F5F1ED" opacity="0.06"/>
-    <circle cx="790" cy="558" r="22" fill="#F5F1ED" opacity="0.2"/>
-    <circle cx="778" cy="558" r="16" fill="#3B4A5C" opacity="0.6"/>
-    <rect x="200" y="615" width="380" height="56" rx="12" fill="#F5F1ED" opacity="0.06"/>
-    <circle cx="790" cy="643" r="22" fill="#F5F1ED" opacity="0.2"/>
-    <circle cx="802" cy="643" r="16" fill="url(#copperGradient)"/>
-    <rect x="200" y="700" width="380" height="56" rx="12" fill="#F5F1ED" opacity="0.06"/>
-    <circle cx="790" cy="728" r="22" fill="#F5F1ED" opacity="0.2"/>
-    <circle cx="802" cy="728" r="16" fill="url(#copperGradient)"/>
-    <circle cx="225" cy="388" r="6" fill="url(#copperGradient)" opacity="0.6"/>
-    <circle cx="225" cy="473" r="6" fill="url(#copperGradient)" opacity="0.6"/>
-    <circle cx="225" cy="558" r="6" fill="url(#copperGradient)" opacity="0.4"/>
-    <circle cx="225" cy="643" r="6" fill="url(#copperGradient)" opacity="0.6"/>
-    <circle cx="225" cy="728" r="6" fill="url(#copperGradient)" opacity="0.6"/>
-    <line x1="255" y1="388" x2="480" y2="388" stroke="#F5F1ED" stroke-width="5" stroke-linecap="round" opacity="0.15"/>
-    <line x1="255" y1="473" x2="520" y2="473" stroke="#F5F1ED" stroke-width="5" stroke-linecap="round" opacity="0.15"/>
-    <line x1="255" y1="558" x2="450" y2="558" stroke="#F5F1ED" stroke-width="5" stroke-linecap="round" opacity="0.15"/>
-    <line x1="255" y1="643" x2="540" y2="643" stroke="#F5F1ED" stroke-width="5" stroke-linecap="round" opacity="0.15"/>
-    <line x1="255" y1="728" x2="500" y2="728" stroke="#F5F1ED" stroke-width="5" stroke-linecap="round" opacity="0.15"/>
+
+  <rect width="1024" height="1024" fill="#020304"/>
+
+  <g filter="url(#outerShadow)">
+    <rect x="128" y="150" width="768" height="724" rx="56" fill="url(#copperGradient)"/>
+    <rect x="154" y="176" width="716" height="672" rx="42" fill="url(#panelGradient)"/>
+
+    <g filter="url(#innerSoftness)">
+      <rect x="154" y="176" width="716" height="120" rx="42" fill="url(#headerGradient)"/>
+      <path d="M154 250C154 275.405 174.595 296 200 296H824C849.405 296 870 275.405 870 250V218C870 194.804 851.196 176 828 176H196C172.804 176 154 194.804 154 218V250Z" fill="#111820" opacity="0.28"/>
+    </g>
+
+    <rect x="206" y="226" width="138" height="54" rx="14" fill="url(#copperGradient)"/>
+    <rect x="372" y="226" width="138" height="54" rx="14" fill="url(#inactiveGradient)"/>
+    <rect x="538" y="226" width="138" height="54" rx="14" fill="url(#inactiveGradient)"/>
+    <rect x="704" y="226" width="138" height="54" rx="14" fill="url(#inactiveGradient)"/>
+
+    <g>
+      <rect x="200" y="364" width="420" height="64" rx="16" fill="url(#rowGradient)"/>
+      <circle cx="232" cy="396" r="8" fill="url(#copperGradient)"/>
+      <rect x="268" y="391" width="260" height="8" rx="4" fill="#F5F1ED" opacity="0.18"/>
+
+      <rect x="200" y="456" width="420" height="64" rx="16" fill="url(#rowGradient)"/>
+      <circle cx="232" cy="488" r="8" fill="url(#copperGradient)"/>
+      <rect x="268" y="483" width="300" height="8" rx="4" fill="#F5F1ED" opacity="0.18"/>
+
+      <rect x="200" y="548" width="420" height="64" rx="16" fill="url(#rowGradient)"/>
+      <circle cx="232" cy="580" r="8" fill="url(#copperGradient)" opacity="0.72"/>
+      <rect x="268" y="575" width="230" height="8" rx="4" fill="#F5F1ED" opacity="0.16"/>
+
+      <rect x="200" y="640" width="420" height="64" rx="16" fill="url(#rowGradient)"/>
+      <circle cx="232" cy="672" r="8" fill="url(#copperGradient)"/>
+      <rect x="268" y="667" width="324" height="8" rx="4" fill="#F5F1ED" opacity="0.18"/>
+
+      <rect x="200" y="732" width="420" height="64" rx="16" fill="url(#rowGradient)"/>
+      <circle cx="232" cy="764" r="8" fill="url(#copperGradient)"/>
+      <rect x="268" y="759" width="276" height="8" rx="4" fill="#F5F1ED" opacity="0.18"/>
+    </g>
+
+    <g filter="url(#knobShadow)">
+      <rect x="760" y="372" width="70" height="48" rx="24" fill="#F5F1ED" opacity="0.16"/>
+      <circle cx="806" cy="396" r="22" fill="url(#copperGradient)"/>
+
+      <rect x="760" y="464" width="70" height="48" rx="24" fill="#F5F1ED" opacity="0.16"/>
+      <circle cx="806" cy="488" r="22" fill="url(#copperGradient)"/>
+
+      <rect x="760" y="556" width="70" height="48" rx="24" fill="#F5F1ED" opacity="0.14"/>
+      <circle cx="784" cy="580" r="22" fill="#465568"/>
+
+      <rect x="760" y="648" width="70" height="48" rx="24" fill="#F5F1ED" opacity="0.16"/>
+      <circle cx="806" cy="672" r="22" fill="url(#copperGradient)"/>
+
+      <rect x="760" y="740" width="70" height="48" rx="24" fill="#F5F1ED" opacity="0.16"/>
+      <circle cx="806" cy="764" r="22" fill="url(#copperGradient)"/>
+    </g>
   </g>
 </svg>
