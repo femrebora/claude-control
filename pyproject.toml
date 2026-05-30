@@ -4,7 +4,7 @@ version = "1.1.0"
 description = "Local dashboard for managing ~/.claude/ skills, plugins, agents, and commands"
 requires-python = ">=3.10"
 dependencies = [
-    "fastapi>=0.115.0",
+    "fastapi>=0.136.3",
     "uvicorn[standard]>=0.34.0",
     "python-multipart>=0.0.20",
     "pyyaml>=6.0",

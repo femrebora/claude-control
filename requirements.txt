@@ -1,4 +1,4 @@
-fastapi>=0.115
+fastapi>=0.136.3
 uvicorn[standard]>=0.32
 python-multipart>=0.0.20
 pyyaml>=6.0
