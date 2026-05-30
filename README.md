@@ -17,9 +17,6 @@ It runs entirely on your machine. No telemetry, no remote calls, no auth needed 
 <p align="center">
   <img src="assets/claude-control-icon.svg" width="128" alt="claude-control icon" />
 </p>
-
-![dashboard preview](assets/icon.png)
-
 ---
 
 ## Features
