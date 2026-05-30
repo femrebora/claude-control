@@ -4,7 +4,7 @@ Useful if you want the dashboard always available on a home server (Beelink, NUC
 
 ## 1. User-level systemd unit
 
-Create `~/.config/systemd/user/claude-control.service`:
+Create `~/.config/systemd/user/claude-control.service` (replace `YOUR_USERNAME` with your actual username):
 
 ```ini
 [Unit]
@@ -13,8 +13,8 @@ After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=%h/claude-control
-ExecStart=%h/claude-control/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8765
+WorkingDirectory=/home/YOUR_USERNAME/claude-control
+ExecStart=/home/YOUR_USERNAME/claude-control/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8765
 Restart=on-failure
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1

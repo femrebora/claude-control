@@ -4,6 +4,9 @@ const state = {
   kind: "skills",
   query: "",
   selectedTag: null,
+  sortBy: "name",
+  sortDir: 1,
+  loading: false,
   data: { skills: [], plugins: [], agents: [], commands: [] },
   stats: null,
 };
@@ -18,6 +21,9 @@ const zipUpload = $("zip-upload");
 const cloneBtn = $("clone-btn");
 const bulkBtn = $("bulk-btn");
 const refreshBtn = $("refresh-btn");
+const trashBtn = $("trash-btn");
+const themeToggle = $("theme-toggle");
+const sortSelect = $("sort-select");
 
 // --- API helper ---
 async function api(path, opts = {}) {
@@ -29,6 +35,8 @@ async function api(path, opts = {}) {
 }
 
 async function refresh() {
+  state.loading = true;
+  renderGrid();
   try {
     const [assets, statsData] = await Promise.all([api("/api/assets"), api("/api/stats")]);
     state.data = assets;
@@ -38,6 +46,9 @@ async function refresh() {
     renderGrid();
   } catch (e) {
     toast("Failed to load: " + e.message, "error");
+  } finally {
+    state.loading = false;
+    renderGrid();
   }
 }
 
@@ -64,10 +75,10 @@ function renderTags() {
     return;
   }
   const allClass = state.selectedTag === null ? "tag-pill active" : "tag-pill";
-  const html = [`<div class="${allClass}" data-tag="">all</div>`].concat(
+  const html = [`<div class="${allClass}" data-tag="" tabindex="0" role="button" aria-pressed="${state.selectedTag === null}">all</div>`].concat(
     tags.map((t) => {
       const cls = state.selectedTag === t ? "tag-pill active" : "tag-pill";
-      return `<div class="${cls}" data-tag="${escapeAttr(t)}">${escapeHtml(t)}</div>`;
+      return `<div class="${cls}" data-tag="${escapeAttr(t)}" tabindex="0" role="button" aria-pressed="${state.selectedTag === t}">${escapeHtml(t)}</div>`;
     })
   );
   sidebar.innerHTML = html.join("");
@@ -75,6 +86,13 @@ function renderTags() {
 
 function renderGrid() {
   let items = state.data[state.kind] || [];
+
+  // Loading skeleton
+  if (state.loading && items.length === 0) {
+    grid.innerHTML = `<div class="empty">loading…</div>`;
+    return;
+  }
+
   if (state.query) {
     const q = state.query.toLowerCase();
     items = items.filter(
@@ -87,11 +105,31 @@ function renderGrid() {
   if (state.selectedTag) {
     items = items.filter((it) => it.tags.includes(state.selectedTag));
   }
+
+  // Sort
+  items = [...items].sort((a, b) => {
+    switch (state.sortBy) {
+      case "name": return state.sortDir * a.name.localeCompare(b.name);
+      case "modified": return state.sortDir * ((new Date(b.modified || 0)).getTime() - (new Date(a.modified || 0)).getTime());
+      case "size": return state.sortDir * (b.size - a.size);
+      default: return 0;
+    }
+  });
+
+  const filterActive = !!(state.query || state.selectedTag);
+  let countHtml = "";
+  if (filterActive) {
+    countHtml = `<div class="result-count">${items.length} ${state.kind} found</div>`;
+  }
+
   if (items.length === 0) {
-    grid.innerHTML = `<div class="empty">no ${state.kind} match the current filter</div>`;
+    const msg = filterActive
+      ? `no ${state.kind} match the current filter`
+      : `no ${state.kind} yet`;
+    grid.innerHTML = countHtml + `<div class="empty">${msg}</div>`;
     return;
   }
-  grid.innerHTML = items.map(card).join("");
+  grid.innerHTML = countHtml + items.map(card).join("");
 }
 
 function basenameFromPath(path) {
@@ -115,10 +153,17 @@ function card(it) {
 
   const base = basenameFromPath(it.path);
 
-  const stateButtons = isSkill ? `
-    <button class="btn" data-act="state" data-state="on" data-name="${escapeAttr(it.name)}">on</button>
-    <button class="btn" data-act="state" data-state="name-only" data-name="${escapeAttr(it.name)}">name-only</button>
-    <button class="btn" data-act="state" data-state="off" data-name="${escapeAttr(it.name)}">off</button>` : "";
+  let stateButtons = "";
+  if (isSkill) {
+    stateButtons = `
+      <button class="btn" data-act="state" data-state="on" data-name="${escapeAttr(it.name)}" data-kind="${it.kind}">on</button>
+      <button class="btn" data-act="state" data-state="name-only" data-name="${escapeAttr(it.name)}" data-kind="${it.kind}">name-only</button>
+      <button class="btn" data-act="state" data-state="off" data-name="${escapeAttr(it.name)}" data-kind="${it.kind}">off</button>`;
+  } else if (isPlugin) {
+    stateButtons = `
+      <button class="btn" data-act="state" data-state="on" data-name="${escapeAttr(it.name)}" data-kind="${it.kind}">on</button>
+      <button class="btn" data-act="state" data-state="off" data-name="${escapeAttr(it.name)}" data-kind="${it.kind}">off</button>`;
+  }
 
   const editBtn = it.editable
     ? `<button class="btn" data-act="edit" data-kind="${it.kind}" data-base="${escapeAttr(base)}">edit</button>` : "";
@@ -128,7 +173,7 @@ function card(it) {
   return `
     <article class="card" data-kind="${it.kind}" data-base="${escapeAttr(base)}">
       <div class="card-header">
-        <h3 class="card-name" title="Click to preview">${escapeHtml(it.name)}</h3>
+        <h3 class="card-name" title="Click to preview" tabindex="0" role="button">${escapeHtml(it.name)}</h3>
         <span class="card-state ${stateClass}">${it.state}</span>
       </div>
       <p class="card-desc">${desc}</p>
@@ -140,7 +185,7 @@ function card(it) {
         ${stateButtons}
         ${editBtn}
         ${validateBtn}
-        ${(isPlugin && it.version) ? "" : `<button class="btn danger" data-act="delete" data-kind="${it.kind}" data-base="${escapeAttr(base)}" data-path="${escapeAttr(it.path)}">delete</button>`}
+        ${(isPlugin) ? "" : `<button class="btn danger" data-act="delete" data-kind="${it.kind}" data-base="${escapeAttr(base)}" data-path="${escapeAttr(it.path)}">delete</button>`}
       </div>
     </article>`;
 }
@@ -169,6 +214,17 @@ function formatDate(iso) {
   } catch { return ""; }
 }
 
+function populateTagDatalist(inputId, listId) {
+  let dl = $(listId);
+  if (!dl) {
+    dl = document.createElement("datalist");
+    dl.id = listId;
+    $(inputId).setAttribute("list", listId);
+    $(inputId).after(dl);
+  }
+  dl.innerHTML = (state.stats?.all_tags || []).map(t => `<option value="${escapeHtml(t)}">`).join("");
+}
+
 // Safe markdown rendering: marked → HTML, then DOMPurify scrubs it
 function renderMarkdown(md) {
   if (typeof marked === "undefined" || typeof DOMPurify === "undefined") {
@@ -195,9 +251,13 @@ tabs.addEventListener("click", (e) => {
   renderGrid();
 });
 
+let filterTimer = null;
 filterInput.addEventListener("input", (e) => {
-  state.query = e.target.value;
-  renderGrid();
+  clearTimeout(filterTimer);
+  filterTimer = setTimeout(() => {
+    state.query = e.target.value;
+    renderGrid();
+  }, 250);
 });
 
 sidebar.addEventListener("click", (e) => {
@@ -206,6 +266,17 @@ sidebar.addEventListener("click", (e) => {
   state.selectedTag = el.dataset.tag === "" ? null : el.dataset.tag;
   renderTags();
   renderGrid();
+});
+
+sidebar.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") {
+    const el = e.target.closest(".tag-pill");
+    if (!el) return;
+    e.preventDefault();
+    state.selectedTag = el.dataset.tag === "" ? null : el.dataset.tag;
+    renderTags();
+    renderGrid();
+  }
 });
 
 // --- Card click (preview or buttons) ---
@@ -232,15 +303,25 @@ grid.addEventListener("click", async (e) => {
     if (act === "state") {
       const fd = new FormData();
       fd.append("state", btn.dataset.state);
-      await api(`/api/skills/${encodeURIComponent(name)}/state`, { method: "POST", body: fd });
+      const stateKind = btn.dataset.kind || "skills";
+	      await api(`/api/${stateKind}/${encodeURIComponent(name)}/state`, { method: "POST", body: fd });
       toast(`${name} → ${btn.dataset.state}`, "ok");
       refresh();
     }
     if (act === "delete") {
-      if (!confirm(`Delete ${btn.dataset.path}?\n\nRemoves the folder/file from your ~/.claude/.`)) return;
-      await api(`/api/${kind}/${encodeURIComponent(base)}`, { method: "DELETE" });
-      toast(`Deleted ${btn.dataset.path}`, "ok");
-      refresh();
+      confirmDialog(`Move "${btn.dataset.path}" to trash? It goes to ~/.claude/.trash/ and can be restored.`, async () => {
+        await api(`/api/${kind}/${encodeURIComponent(base)}`, { method: "DELETE" });
+        toast(`Trashed ${btn.dataset.path}`, "ok", {
+          action: "undo",
+          handler: async () => {
+            await api(`/api/trash/restore/${kind}/${encodeURIComponent(base)}`, { method: "POST" });
+            toast(`Restored ${btn.dataset.path}`, "ok");
+            refresh();
+          }
+        });
+        refresh();
+      });
+      return;
     }
     if (act === "edit") openEditModal(kind, base);
     if (act === "validate") {
@@ -249,6 +330,19 @@ grid.addEventListener("click", async (e) => {
     }
   } catch (err) {
     toast(err.message, "error");
+  }
+});
+
+// Keyboard: Enter/Space on card name opens preview
+grid.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") {
+    const nameEl = e.target.closest(".card-name");
+    if (!nameEl) return;
+    e.preventDefault();
+    const card = nameEl.closest(".card");
+    if (card?.dataset.kind && card?.dataset.base) {
+      openPreview(card.dataset.kind, card.dataset.base);
+    }
   }
 });
 
@@ -261,7 +355,7 @@ async function openPreview(kind, base) {
   previewing = { kind, base };
   try {
     const d = await api(`/api/${kind}/${encodeURIComponent(base)}/preview`);
-    $("preview-title").textContent = d.name;
+    $("preview-title-h").textContent = d.name;
     $("preview-desc").textContent = d.description || "";
     $("preview-tags").innerHTML = (d.tags || [])
       .map((t) => `<span class="tag-pill">${escapeHtml(t)}</span>`).join("");
@@ -278,10 +372,11 @@ async function openPreview(kind, base) {
       $("preview-files-wrap").hidden = true;
     }
 
-    // Show edit button only if editable (markdown)
+    // Show edit button only if editable (markdown has body)
     $("preview-edit").style.display = d.body !== "" ? "" : "none";
 
     previewModal.hidden = false;
+    $("preview-close").focus();
   } catch (e) {
     toast(e.message, "error");
   }
@@ -294,12 +389,12 @@ $("preview-edit").addEventListener("click", () => {
   openEditModal(previewing.kind, previewing.base);
 });
 
-// Escape key closes preview/edit/bulk modals
+// Escape key closes all modals
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
-  for (const id of ["preview-modal", "edit-modal", "bulk-modal"]) {
+  for (const id of ["preview-modal", "edit-modal", "bulk-modal", "create-modal", "trash-modal", "confirm-modal"]) {
     const m = $(id);
-    if (m && !m.hidden) m.hidden = true;
+    if (m && !m.hidden) { m.hidden = true; return; }
   }
 });
 
@@ -312,14 +407,17 @@ async function openEditModal(kind, base) {
   editing = { kind, base };
   try {
     const d = await api(`/api/${kind}/${encodeURIComponent(base)}/file`);
-    $("edit-title").textContent = `Edit · ${base}`;
+    $("edit-title-h").textContent = `Edit · ${base}`;
     $("edit-name").value = d.frontmatter.name || base;
     $("edit-desc").value = d.frontmatter.description || "";
     const tags = d.frontmatter.tags || d.frontmatter.categories || [];
     $("edit-tags").value = Array.isArray(tags) ? tags.join(", ") : tags;
     $("edit-body").value = d.body || "";
     $("edit-issues").innerHTML = "";
+    // Tag autocomplete
+    populateTagDatalist("edit-tags", "edit-tags-list");
     editModal.hidden = false;
+    $("edit-name").focus();
   } catch (e) {
     toast(e.message, "error");
   }
@@ -437,6 +535,158 @@ $("bulk-go").addEventListener("click", async () => {
   }
 });
 
+// --- Create new asset ---
+
+const createModal = $("create-modal");
+const createBtn = $("create-btn");
+
+createBtn.addEventListener("click", () => {
+  $("create-name").value = "";
+  $("create-desc").value = "";
+  $("create-tags").value = "";
+  $("create-result").innerHTML = "";
+  populateTagDatalist("create-tags", "create-tags-list");
+  createModal.hidden = false;
+  $("create-name").focus();
+});
+$("create-close").addEventListener("click", () => { createModal.hidden = true; });
+
+$("create-go").addEventListener("click", async () => {
+  const name = $("create-name").value.trim();
+  const desc = $("create-desc").value.trim();
+  const tags = $("create-tags").value.trim();
+  if (!name) { toast("Name is required", "error"); return; }
+  const fd = new FormData();
+  fd.append("name", name);
+  fd.append("description", desc);
+  fd.append("tags", tags);
+  try {
+    await api(`/api/${state.kind}/create`, { method: "POST", body: fd });
+    toast(`Created ${state.kind}/${name}`, "ok");
+    createModal.hidden = true;
+    refresh();
+  } catch (e) {
+    $("create-result").innerHTML = `<div class="issue error">${escapeHtml(e.message)}</div>`;
+  }
+});
+
+// --- Theme toggle ---
+
+(function initTheme() {
+  const saved = localStorage.getItem("cc-theme");
+  if (saved) document.documentElement.dataset.theme = saved;
+  if (themeToggle) {
+    themeToggle.textContent = saved === "light" ? "dark" : "light";
+  }
+})();
+
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    const current = document.documentElement.dataset.theme;
+    const next = current === "light" ? "" : "light";
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem("cc-theme", next);
+    themeToggle.textContent = next ? "dark" : "light";
+  });
+}
+
+// --- Sort ---
+
+if (sortSelect) {
+  sortSelect.addEventListener("change", () => {
+    const [by, dir] = sortSelect.value.split("-");
+    state.sortBy = by;
+    state.sortDir = dir === "asc" ? 1 : -1;
+    renderGrid();
+  });
+}
+
+// --- Keyboard shortcuts ---
+
+document.addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === "r") {
+    e.preventDefault();
+    refreshOnce("manual");
+  }
+});
+
+// --- Confirmation dialog ---
+
+function confirmDialog(message, onConfirm) {
+  $("confirm-message").textContent = message;
+  $("confirm-modal").hidden = false;
+  $("confirm-yes").focus();
+  $("confirm-yes").onclick = () => {
+    $("confirm-modal").hidden = true;
+    onConfirm();
+  };
+  $("confirm-no").onclick = () => { $("confirm-modal").hidden = true; };
+}
+
+// --- Trash management ---
+
+const trashModal = $("trash-modal");
+
+async function openTrash() {
+  try {
+    const items = await api("/api/trash");
+    if (items.length === 0) {
+      $("trash-list").innerHTML = '<div class="empty" style="padding:2rem;">trash is empty</div>';
+    } else {
+      const rows = items.map((it) => `
+        <tr>
+          <td><strong>${escapeHtml(it.name)}</strong></td>
+          <td>${escapeHtml(it.kind)}</td>
+          <td>${formatBytes(it.size)}</td>
+          <td>${formatDate(it.trashed_at)}</td>
+          <td>
+            <button class="btn" data-trash-act="restore" data-kind="${escapeAttr(it.kind)}" data-name="${escapeAttr(it.name)}">restore</button>
+            <button class="btn danger" data-trash-act="delete" data-kind="${escapeAttr(it.kind)}" data-name="${escapeAttr(it.name)}">delete forever</button>
+          </td>
+        </tr>
+      `).join("");
+      $("trash-list").innerHTML = `
+        <table class="trash-table">
+          <thead><tr><th>Name</th><th>Kind</th><th>Size</th><th>Trashed</th><th>Actions</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    }
+    trashModal.hidden = false;
+    $("trash-close").focus();
+  } catch (e) {
+    toast(e.message, "error");
+  }
+}
+
+if (trashBtn) {
+  trashBtn.addEventListener("click", openTrash);
+}
+
+$("trash-close").addEventListener("click", () => { trashModal.hidden = true; });
+
+$("trash-list").addEventListener("click", async (e) => {
+  const btn = e.target.closest("button[data-trash-act]");
+  if (!btn) return;
+  const { trashAct, kind, name } = btn.dataset;
+  try {
+    if (trashAct === "restore") {
+      await api(`/api/trash/restore/${kind}/${encodeURIComponent(name)}`, { method: "POST" });
+      toast(`Restored ${name}`, "ok");
+    } else {
+      confirmDialog(`Permanently delete "${name}"? This cannot be undone.`, async () => {
+        await api(`/api/trash/${kind}/${encodeURIComponent(name)}`, { method: "DELETE" });
+        toast(`Permanently deleted ${name}`, "ok");
+        openTrash();
+      });
+      return;
+    }
+    openTrash();
+    refresh();
+  } catch (e) {
+    toast(e.message, "error");
+  }
+});
+
 // --- Auto-refresh (manual button + window focus / tab visibility) ---
 
 let refreshing = false;
@@ -465,12 +715,22 @@ document.addEventListener("visibilitychange", () => {
 });
 
 // --- Toast ---
-function toast(msg, kind = "") {
+function toast(msg, kind = "", opts = {}) {
   const t = document.createElement("div");
   t.className = "toast" + (kind ? " " + kind : "");
+  t.setAttribute("role", "status");
+  t.setAttribute("aria-live", "polite");
   t.textContent = msg;
+  if (opts.action) {
+    const btn = document.createElement("button");
+    btn.className = "btn ghost";
+    btn.textContent = opts.action;
+    btn.style.marginLeft = "0.75rem";
+    btn.addEventListener("click", () => { opts.handler(); t.remove(); });
+    t.appendChild(btn);
+  }
   document.body.appendChild(t);
-  setTimeout(() => t.remove(), 3500);
+  setTimeout(() => t.remove(), opts.action ? 6000 : 3500);
 }
 
 refresh();

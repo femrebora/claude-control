@@ -52,7 +52,10 @@ bold "▸ Registering desktop entry"
 mkdir -p "$APPS_DIR"
 sed "s|__INSTALL_PATH__|$PROJECT_DIR|g" \
   "$PROJECT_DIR/assets/claude-control.desktop.in" > "$DESKTOP_FILE"
-chmod +x "$DESKTOP_FILE"
+# GNOME trusts .desktop files in this directory; executable bit is not needed
+if command -v desktop-file-validate >/dev/null; then
+  desktop-file-validate "$DESKTOP_FILE" 2>/dev/null || true
+fi
 
 # 5. icon
 mkdir -p "$ICONS_DIR"
@@ -67,11 +70,15 @@ if command -v gtk-update-icon-cache >/dev/null; then
 fi
 
 echo
-green "✓ Installed."
+green "✓ Installed successfully."
 echo
-echo "  Open the Activities overview (Super key) and search for 'Claude Control'."
-echo "  Pin it to your dock by right-clicking the icon while running."
+bold "Getting started"
+echo "  1. Open the Activities overview (Super key) and search 'Claude Control'."
+echo "  2. Click the icon to launch — the dashboard opens in your browser."
+echo "  3. Right-click the icon while running and select 'Pin to Dash' to keep it handy."
 echo
-echo "  To uninstall:    $PROJECT_DIR/uninstall.sh"
-echo "  To launch in CLI: $PROJECT_DIR/.venv/bin/python $PROJECT_DIR/launcher.py"
-echo "  To stop server:  $PROJECT_DIR/.venv/bin/python $PROJECT_DIR/launcher.py --stop"
+bold "Commands"
+echo "  Uninstall:      bash $PROJECT_DIR/uninstall.sh"
+echo "  Launch via CLI: $PROJECT_DIR/.venv/bin/python $PROJECT_DIR/launcher.py"
+echo "  Stop server:    $PROJECT_DIR/.venv/bin/python $PROJECT_DIR/launcher.py --stop"
+echo "  Run in terminal: cd $PROJECT_DIR && ./run.sh"

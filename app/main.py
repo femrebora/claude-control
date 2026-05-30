@@ -22,6 +22,8 @@ import subprocess
 import sys
 import tempfile
 import zipfile
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager, suppress
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
@@ -49,12 +51,28 @@ GIT_URL_RE = re.compile(r"^(https://|git@)[\w./@:\-]+\.git$")
 SkillState = Literal["on", "off", "name-only"]
 
 BASE_DIR = Path(__file__).parent
-app = FastAPI(title="claude-control", version="1.1.0")
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    """Remove orphaned .tmp files from interrupted atomic writes on startup."""
+    for kind in ASSET_KINDS:
+        d = _claude_home() / ASSET_KINDS[kind]
+        if not d.exists():
+            continue
+        for tmp in d.rglob("*.tmp"):
+            with suppress(OSError):
+                tmp.unlink(missing_ok=True)
+    yield
+
+
+app = FastAPI(title="claude-control", version="1.1.0", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
 
 # --- Helpers (read CLAUDE_HOME/SETTINGS_FILE via module so tests can patch) ---
+
 
 def _claude_home() -> Path:
     return sys.modules[__name__].CLAUDE_HOME
@@ -62,6 +80,10 @@ def _claude_home() -> Path:
 
 def _settings_file() -> Path:
     return sys.modules[__name__].SETTINGS_FILE
+
+
+def _trash_dir() -> Path:
+    return _claude_home() / ".trash"
 
 
 def _safe_join(base: Path, *parts: str) -> Path:
@@ -74,7 +96,12 @@ def _safe_join(base: Path, *parts: str) -> Path:
 def _kind_dir(kind: str) -> Path:
     if kind not in ASSET_KINDS:
         raise HTTPException(status_code=404, detail=f"Unknown kind: {kind}")
-    d = _claude_home() / ASSET_KINDS[kind]
+    return _claude_home() / ASSET_KINDS[kind]
+
+
+def _ensure_kind_dir(kind: str) -> Path:
+    """Like _kind_dir but creates the directory (for write routes only)."""
+    d = _kind_dir(kind)
     d.mkdir(parents=True, exist_ok=True)
     return d
 
@@ -190,33 +217,42 @@ def _scan_plugins_from_manifest() -> list[dict]:
 
         try:
             stat = install_path.stat() if install_path.exists() else None
-            modified = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat() if stat else ""
+            modified = (
+                datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat() if stat else ""
+            )
             size = _dir_size(install_path) if install_path.exists() else 0
         except OSError:
             modified = ""
             size = 0
 
-        out.append({
-            "name": plugin_name,
-            "description": description[:240],
-            "path": str(install_path.relative_to(_claude_home())) if (install_path.exists() and install_path.is_relative_to(_claude_home())) else (str(install_path) if install_path.exists() else key),
-            "kind": "plugins",
-            "state": "on",
-            "is_dir": True,
-            "tags": tags,
-            "size": size,
-            "modified": modified,
-            "editable": False,
-            "version": entry.get("version", ""),
-            "marketplace": marketplace,
-            "installed_at": entry.get("installedAt", ""),
-        })
+        out.append(
+            {
+                "name": plugin_name,
+                "description": description[:240],
+                "path": str(install_path.relative_to(_claude_home()))
+                if (install_path.exists() and install_path.is_relative_to(_claude_home()))
+                else (str(install_path) if install_path.exists() else key),
+                "kind": "plugins",
+                "state": "on",
+                "is_dir": True,
+                "tags": tags,
+                "size": size,
+                "modified": modified,
+                "editable": False,
+                "version": entry.get("version", ""),
+                "marketplace": marketplace,
+                "installed_at": entry.get("installedAt", ""),
+            }
+        )
     return out
 
 
 def _scan_kind(kind: str) -> list[dict]:
     d = _kind_dir(kind)
-    overrides = _read_settings().get("skillOverrides", {}) if kind == "skills" else {}
+    if not d.exists():
+        return []
+    settings = _read_settings()
+    overrides = settings.get("skillOverrides" if kind == "skills" else "pluginOverrides", {})
     out: list[dict] = []
 
     if kind == "plugins":
@@ -240,7 +276,7 @@ def _scan_kind(kind: str) -> list[dict]:
         description = (fm.get("description") or "").strip()
         tags = _normalize_tags(fm.get("tags") or fm.get("categories") or [])
 
-        state: SkillState = overrides.get(name, "on") if kind == "skills" else "on"
+        state: SkillState = overrides.get(name, "on") if overrides else "on"
 
         try:
             stat = entry.stat()
@@ -250,18 +286,20 @@ def _scan_kind(kind: str) -> list[dict]:
             modified = ""
             size = 0
 
-        out.append({
-            "name": name,
-            "description": description[:240],
-            "path": str(entry.relative_to(_claude_home())),
-            "kind": kind,
-            "state": state,
-            "is_dir": entry.is_dir(),
-            "tags": tags,
-            "size": size,
-            "modified": modified,
-            "editable": meta.suffix == ".md",
-        })
+        out.append(
+            {
+                "name": name,
+                "description": description[:240],
+                "path": str(entry.relative_to(_claude_home())),
+                "kind": kind,
+                "state": state,
+                "is_dir": entry.is_dir(),
+                "tags": tags,
+                "size": size,
+                "modified": modified,
+                "editable": meta.suffix == ".md",
+            }
+        )
     return out
 
 
@@ -297,10 +335,12 @@ def _validate_skill(entry: Path) -> list[dict]:
     if not name:
         issues.append({"level": "error", "message": "Missing required field: name"})
     elif not VALID_NAME_RE.match(str(name)):
-        issues.append({
-            "level": "warning",
-            "message": f"Name '{name}' should be lowercase, hyphenated, 2-64 chars",
-        })
+        issues.append(
+            {
+                "level": "warning",
+                "message": f"Name '{name}' should be lowercase, hyphenated, 2-64 chars",
+            }
+        )
 
     description = fm.get("description")
     if not description:
@@ -314,15 +354,18 @@ def _validate_skill(entry: Path) -> list[dict]:
         issues.append({"level": "warning", "message": "Skill body is empty"})
 
     if entry.is_dir() and entry.name != name:
-        issues.append({
-            "level": "info",
-            "message": f"Folder '{entry.name}' differs from skill name '{name}'",
-        })
+        issues.append(
+            {
+                "level": "info",
+                "message": f"Folder '{entry.name}' differs from skill name '{name}'",
+            }
+        )
 
     return issues
 
 
 # --- Models ------------------------------------------------------------------
+
 
 class FileEdit(BaseModel):
     frontmatter: dict
@@ -330,6 +373,7 @@ class FileEdit(BaseModel):
 
 
 # --- Routes ------------------------------------------------------------------
+
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
@@ -346,8 +390,20 @@ def health() -> dict:
 
 
 @app.get("/api/assets")
-def list_assets() -> dict:
-    return {kind: _scan_kind(kind) for kind in ASSET_KINDS}
+def list_assets(q: str = "") -> dict:
+    assets = {kind: _scan_kind(kind) for kind in ASSET_KINDS}
+    if not q:
+        return assets
+    query = q.lower()
+    for kind in assets:
+        assets[kind] = [
+            it
+            for it in assets[kind]
+            if query in it["name"].lower()
+            or query in (it.get("description") or "").lower()
+            or any(query in t.lower() for t in it.get("tags", []))
+        ]
+    return assets
 
 
 @app.get("/api/stats")
@@ -370,18 +426,55 @@ def stats() -> dict:
     return out
 
 
-@app.post("/api/skills/{name}/state")
-def set_skill_state(name: str, state: str = Form(...)) -> dict:
-    if state not in ("on", "off", "name-only"):
-        raise HTTPException(status_code=400, detail="Invalid state")
+@app.post("/api/{kind}/{name}/state")
+def set_asset_state(kind: str, name: str, state: str = Form(...)) -> dict:
+    if kind not in ASSET_KINDS:
+        raise HTTPException(status_code=404, detail=f"Unknown kind: {kind}")
+    allowed = ("on", "off", "name-only") if kind == "skills" else ("on", "off")
+    if state not in allowed:
+        raise HTTPException(status_code=400, detail=f"Invalid state (use: {', '.join(allowed)})")
     settings = _read_settings()
-    overrides = settings.setdefault("skillOverrides", {})
+    key = "skillOverrides" if kind == "skills" else "pluginOverrides"
+    overrides = settings.setdefault(key, {})
     if state == "on":
         overrides.pop(name, None)
     else:
         overrides[name] = state
     _write_settings(settings)
-    return {"ok": True, "name": name, "state": state}
+    return {"ok": True, "kind": kind, "name": name, "state": state}
+
+
+@app.post("/api/{kind}/create")
+def create_asset(
+    kind: str, name: str = Form(...), description: str = Form(""), tags: str = Form("")
+) -> dict:
+    if kind not in ASSET_KINDS:
+        raise HTTPException(status_code=404, detail=f"Unknown kind: {kind}")
+    if not VALID_NAME_RE.match(name):
+        raise HTTPException(
+            status_code=400, detail="Name must be lowercase, hyphenated, 2-64 chars"
+        )
+    target_dir = _ensure_kind_dir(kind)
+    dest = _safe_join(target_dir, name)
+    if dest.exists():
+        raise HTTPException(status_code=409, detail=f"{name} already exists")
+
+    tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
+    tags_yaml = yaml.safe_dump(tag_list, default_flow_style=True).strip() if tag_list else "[]"
+
+    template = f"""---
+name: {name}
+description: {description or "TODO: describe this " + kind[:-1]}
+tags: {tags_yaml}
+---
+
+# {name}
+
+TODO: write your {kind[:-1]} body here.
+"""
+    dest.mkdir(parents=True)
+    (dest / "SKILL.md").write_text(template, encoding="utf-8")
+    return {"ok": True, "created": name, "kind": kind}
 
 
 @app.get("/api/{kind}/{name}/file")
@@ -467,20 +560,81 @@ def delete_asset(kind: str, name: str) -> dict:
     target = _safe_join(_kind_dir(kind), name)
     if not target.exists():
         raise HTTPException(status_code=404, detail="Not found")
-    if target.is_dir():
-        shutil.rmtree(target)
+    _trash_dir().mkdir(parents=True, exist_ok=True)
+    trash_name = f"{kind}/{name}"
+    trash_dest = _trash_dir() / trash_name
+    trash_dest.parent.mkdir(parents=True, exist_ok=True)
+    if trash_dest.exists():
+        shutil.rmtree(trash_dest)
+    shutil.move(str(target), str(trash_dest))
+    return {"ok": True, "trashed": name, "kind": kind}
+
+
+@app.get("/api/trash")
+def list_trash() -> list[dict]:
+    if not _trash_dir().exists():
+        return []
+    items: list[dict] = []
+    for kind_dir in sorted(_trash_dir().iterdir()):
+        if kind_dir.name.startswith(".") or not kind_dir.is_dir():
+            continue
+        for entry in sorted(kind_dir.iterdir()):
+            if entry.name.startswith("."):
+                continue
+            try:
+                stat = entry.stat()
+                items.append(
+                    {
+                        "kind": kind_dir.name,
+                        "name": entry.name,
+                        "size": _dir_size(entry),
+                        "trashed_at": datetime.fromtimestamp(
+                            stat.st_mtime, tz=timezone.utc
+                        ).isoformat(),
+                    }
+                )
+            except OSError:
+                continue
+    return items
+
+
+@app.post("/api/trash/restore/{kind}/{name}")
+def restore_from_trash(kind: str, name: str) -> dict:
+    trash_path = _trash_dir() / kind / name
+    if not trash_path.exists():
+        raise HTTPException(status_code=404, detail="Not found in trash")
+    dest = _ensure_kind_dir(kind) / name
+    if dest.exists():
+        raise HTTPException(status_code=409, detail=f"{name} already exists in {kind}")
+    shutil.move(str(trash_path), str(dest))
+    return {"ok": True, "restored": name, "kind": kind}
+
+
+@app.delete("/api/trash/{kind}/{name}")
+def delete_trash_permanently(kind: str, name: str) -> dict:
+    trash_path = _trash_dir() / kind / name
+    if not trash_path.exists():
+        raise HTTPException(status_code=404, detail="Not found in trash")
+    if trash_path.is_dir():
+        shutil.rmtree(trash_path)
     else:
-        target.unlink()
-    return {"ok": True, "deleted": name}
+        trash_path.unlink()
+    return {"ok": True, "deleted_permanently": name, "kind": kind}
 
 
 @app.post("/api/{kind}/upload")
 async def upload_zip(kind: str, file: UploadFile = File(...)) -> dict:
-    target_dir = _kind_dir(kind)
+    target_dir = _ensure_kind_dir(kind)
     if not file.filename or not file.filename.lower().endswith(".zip"):
         raise HTTPException(status_code=400, detail="Must be a .zip file")
+
+    MAX_SIZE = 50 * 1024 * 1024  # 50 MB
+    data = await file.read()
+    if len(data) > MAX_SIZE:
+        raise HTTPException(status_code=400, detail="File too large (max 50 MB)")
+
     with tempfile.NamedTemporaryFile(delete=False, suffix=".zip") as tmp:
-        tmp.write(await file.read())
+        tmp.write(data)
         tmp_path = Path(tmp.name)
     try:
         with zipfile.ZipFile(tmp_path) as zf:
@@ -488,7 +642,15 @@ async def upload_zip(kind: str, file: UploadFile = File(...)) -> dict:
                 resolved = (target_dir / member).resolve()
                 if target_dir not in resolved.parents and resolved != target_dir:
                     raise HTTPException(status_code=400, detail=f"Unsafe path in zip: {member}")
-            zf.extractall(target_dir)
+            # Extract member-by-member to avoid symlink traversal
+            for member in zf.infolist():
+                # Check Unix file mode in external_attr (upper 16 bits) for symlink
+                mode = member.external_attr >> 16
+                if mode & 0o120000:  # symlink file type
+                    raise HTTPException(status_code=400, detail="Symlinks not allowed in zip")
+                zf.extract(member, target_dir)
+    except zipfile.BadZipFile as exc:
+        raise HTTPException(status_code=400, detail="Invalid or corrupt ZIP file") from exc
     finally:
         tmp_path.unlink(missing_ok=True)
     return {"ok": True, "extracted_to": str(target_dir)}
@@ -505,16 +667,15 @@ def _git_clone(url: str, dest: Path, depth: int = 1) -> None:
             timeout=180,
         )
     except subprocess.CalledProcessError as e:
-        raise HTTPException(
-            status_code=500, detail=f"git clone failed: {e.stderr.decode()[:300]}"
-        ) from e
+        detail = e.stderr.decode(errors="replace")[:500] if e.stderr else "(no stderr)"
+        raise HTTPException(status_code=500, detail=f"git clone failed: {detail}") from e
     except subprocess.TimeoutExpired as e:
         raise HTTPException(status_code=504, detail="git clone timed out") from e
 
 
 @app.post("/api/{kind}/clone")
 def clone_repo(kind: str, url: str = Form(...)) -> dict:
-    target_dir = _kind_dir(kind)
+    target_dir = _ensure_kind_dir(kind)
     name = url.rstrip("/").split("/")[-1].removesuffix(".git")
     dest = _safe_join(target_dir, name)
     if dest.exists():
@@ -527,7 +688,7 @@ def clone_repo(kind: str, url: str = Form(...)) -> dict:
 def bulk_import(kind: str, url: str = Form(...), subdir: str = Form("")) -> dict:
     """Clone a marketplace-style repo and copy each top-level folder under
     `subdir` (default: repo root) as a separate asset of `kind`."""
-    target_dir = _kind_dir(kind)
+    target_dir = _ensure_kind_dir(kind)
     with tempfile.TemporaryDirectory() as td:
         scratch = Path(td) / "repo"
         _git_clone(url, scratch)

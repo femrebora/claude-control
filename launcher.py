@@ -150,11 +150,19 @@ def start_server() -> int:
     PID_FILE.write_text(str(proc.pid))
     PORT_FILE.write_text(str(port))
 
-    if not wait_healthy(port):
+    try:
+        if not wait_healthy(port):
+            raise RuntimeError(f"Server failed to start. See {LOG_FILE}")
+    except Exception:
         proc.terminate()
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
         PID_FILE.unlink(missing_ok=True)
         PORT_FILE.unlink(missing_ok=True)
-        raise RuntimeError(f"Server failed to start. See {LOG_FILE}")
+        raise
 
     return port
 

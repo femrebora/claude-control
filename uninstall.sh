@@ -19,5 +19,10 @@ if command -v update-desktop-database >/dev/null; then
   update-desktop-database "$APPS_DIR" 2>/dev/null || true
 fi
 
-echo "✓ Desktop entry removed."
-echo "  To remove project files:  rm -rf '$PROJECT_DIR'"
+green() { printf '\033[32m%s\033[0m\n' "$1"; }
+
+RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp}/claude-control"
+
+green "✓ Desktop entry and icon removed."
+echo "  To remove project files:  rm -rf $PROJECT_DIR"
+echo "  To remove runtime files:  rm -rf $RUNTIME_DIR"

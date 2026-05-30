@@ -41,9 +41,12 @@ CLAUDE_HOME="$PWD/test-claude-home" ./run.sh
 
 1. Fork and branch from `main`
 2. Add a test if you change behavior (we use `pytest`)
-3. Run `ruff check && pytest`
-4. Reference the issue your PR closes
-5. Keep PRs focused — one feature or fix per PR
+3. Run `ruff check && ruff format --check --diff && pytest`
+4. Run `bash scripts/preflight.sh` to scan for secrets before pushing
+5. Reference the issue your PR closes
+6. Keep PRs focused — one feature or fix per PR
+
+Or use the Makefile: `make lint && make test`
 
 ## Reporting bugs
 

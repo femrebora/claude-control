@@ -8,6 +8,6 @@ Comment=Manage your ~/.claude/ skills, plugins, agents, and commands
 Exec=__INSTALL_PATH__/.venv/bin/python __INSTALL_PATH__/launcher.py
 Icon=__INSTALL_PATH__/assets/icon.png
 Terminal=false
-Categories=Development;Utility;
+Categories=Development;
 StartupNotify=true
 Keywords=claude;ai;skills;plugins;dashboard;

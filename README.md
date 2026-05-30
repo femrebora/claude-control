@@ -24,15 +24,23 @@ It runs entirely on your machine. No telemetry, no remote calls, no auth needed 
 - **Click any skill name** to open a rendered markdown preview of its full SKILL.md
 - **Stats bar** — live counts and sizes per category
 - **Tag sidebar** — auto-generated from `tags:` frontmatter; click to filter
+- **Tag autocomplete** — suggests existing tags when editing or creating assets
 - **Toggle skills** — `on` / `name-only` / `off`, written to `settings.local.json`
 - **Inline edit** — name, description, tags, and full markdown body in a modal
 - **Validate** — lints SKILL.md frontmatter, flags missing fields and naming issues
 - **Add** new skills via `.zip` upload or `git clone`
 - **Bulk import** — clone a marketplace repo and import every folder as a separate skill
-- **Search** by name, description, or tag
+- **Search** by name, description, or tag (with debounced input and result count)
+- **Sort** — by name, date, or size; ascending or descending
+- **Trash** — soft-delete moves items to `~/.claude/.trash/`; restore or permanently delete via the trash modal
+- **Undo** — toast notification with restore button after deletion
+- **Light/dark theme** — toggle in the header, persisted across reloads
+- **Keyboard navigation** — Tab through cards, Enter to preview, Ctrl+R to refresh, Esc to close modals
+- **Styled confirmation dialogs** — replaces browser prompts with themed modals
+- **Loading states** — visual feedback during data fetches
 - **One-click Ubuntu / macOS / Windows app** — installers register it with your OS; click the icon to launch
 - **Loopback-only** by default; never exposed to the network
-- Zero JS frameworks, no build step, ~1300 lines total
+- Zero JS frameworks, no build step, ~2,500 lines total
 
 ---
 
@@ -157,6 +165,31 @@ Validates SKILL.md against the conventions in the [official skills repo](https:/
 
 Reports as **error** / **warning** / **info**.
 
+### Trash management
+
+Deleting a skill, plugin, agent, or command moves it to `~/.claude/.trash/` — it's never permanently deleted unless you choose to. Click the **trash** button in the action bar to:
+
+- View all trashed items with name, kind, size, and deletion date
+- **Restore** any item back to its original location
+- **Delete forever** to permanently remove it (after a confirmation prompt)
+
+### Sorting
+
+Use the dropdown in the action bar to sort cards by name (A–Z or Z–A), modification date (newest or oldest first), or size (largest or smallest first).
+
+### Theme
+
+Click the **light** / **dark** button in the header to switch between the editorial dark theme and a warm paper-inspired light theme. Your preference is saved and restored on next launch.
+
+### Keyboard shortcuts
+
+| Key | Action |
+|---|---|
+| `Ctrl+R` / `Cmd+R` | Refresh data |
+| `Enter` or `Space` | Open preview for focused card |
+| `Tab` | Move focus between cards, tags, and buttons |
+| `Escape` | Close any open modal |
+
 ---
 
 ## Architecture
@@ -167,17 +200,18 @@ Reports as **error** / **warning** / **info**.
 ├── plugins/            ← managed (display-only; toggle via /plugin in CC)
 ├── agents/             ← managed
 ├── commands/           ← managed
+├── .trash/             ← soft-deleted items (restore via trash modal)
 └── settings.local.json ← skillOverrides written here
 
 claude-control/
 ├── app/
-│   ├── main.py            FastAPI routes + filesystem helpers (~440 lines)
+│   ├── main.py            FastAPI routes + filesystem helpers (~560 lines)
 │   ├── templates/
-│   │   └── index.html     single-page UI
+│   │   └── index.html     single-page UI (~220 lines)
 │   └── static/
-│       ├── style.css      editorial dark theme
-│       └── app.js         vanilla JS, no framework
-├── tests/                 pytest, 19 tests
+│       ├── style.css      editorial theme + light variant (~650 lines)
+│       └── app.js         vanilla JS, no framework (~640 lines)
+├── tests/                 pytest, 47 tests
 ├── launcher.py            cross-platform background server lifecycle
 ├── install.sh             Linux: registers .desktop entry
 ├── install-macos.sh       macOS: builds .app bundle in ~/Applications/

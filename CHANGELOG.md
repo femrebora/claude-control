@@ -5,6 +5,34 @@ All notable changes to claude-control are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] — 2026-05-30
+
+### Added
+- **Trash management UI** — modal with restore and permanent-delete actions
+- **Light/dark theme toggle** — persisted to `localStorage`
+- **Sort controls** — dropdown for name, date, or size (ascending/descending)
+- **Confirmation dialogs** — styled modals replace browser `confirm()`
+- **Undo toast** — restore button appears after deletion
+- **Tag autocomplete** — datalist populated from existing tags in edit/create modals
+- **Keyboard shortcuts** — Ctrl+R to refresh; Enter/Space to open preview from focused card
+- **Search result count** — shows match count when filtering
+- **Debounced search** — 250ms input debounce to avoid layout thrashing
+- 28 new tests (47 total, 82% coverage)
+
+### Fixed
+- Plugin delete button no longer shows for plugins with empty version field
+- Malformed ZIP uploads return 400 instead of 500
+- `starlette<1.0.0` pin added to `pyproject.toml`
+- Orphaned `.tmp` files cleaned on startup
+- `_kind_dir()` no longer creates directories on read-only GET routes
+- Consolidated duplicate state-toggle routes
+- `TRASH_DIR` is now runtime-computed (fixes test isolation)
+
+### Changed
+- Accessibility improvements: ARIA attributes on all modals, focus indicators, keyboard-navigable tags and cards, toast announcements
+- Loading states during data fetches
+- `on_event` replaced with lifespan handler (FastAPI best practice)
+
 ## [1.1.0] — 2026-05-10
 
 ### Added

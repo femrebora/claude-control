@@ -20,6 +20,7 @@
     </div>
     <div class="meta">
       <code>{{ claude_home }}</code>
+      <button class="btn ghost" id="theme-toggle" style="font-size:0.65rem;padding:0.2rem 0.5rem;margin-left:1rem;" title="Toggle light/dark theme">light</button>
     </div>
   </header>
 
@@ -35,6 +36,15 @@
   <section class="actions">
     <input type="search" id="filter" placeholder="filter by name, description, or tag…" />
     <div class="action-buttons">
+      <select id="sort-select" class="btn ghost" style="padding:0.65rem 0.5rem;" title="Sort order">
+        <option value="name-asc">Name A–Z</option>
+        <option value="name-desc">Name Z–A</option>
+        <option value="modified-desc">Newest first</option>
+        <option value="modified-asc">Oldest first</option>
+        <option value="size-desc">Largest first</option>
+        <option value="size-asc">Smallest first</option>
+      </select>
+      <button class="btn ghost" id="create-btn">+ new</button>
       <label class="btn ghost">
         <input type="file" id="zip-upload" accept=".zip" hidden />
         upload .zip
@@ -42,6 +52,7 @@
       <button class="btn ghost" id="clone-btn">git clone…</button>
       <button class="btn ghost" id="bulk-btn">bulk import…</button>
       <button class="btn ghost" id="refresh-btn" title="Re-scan ~/.claude/ (Ctrl+R)">refresh</button>
+      <button class="btn ghost" id="trash-btn" title="Manage trashed items">trash</button>
     </div>
   </section>
 
@@ -58,10 +69,10 @@
   </footer>
 
   <!-- Preview modal -->
-  <div class="modal" id="preview-modal" hidden>
+  <div class="modal" id="preview-modal" hidden role="dialog" aria-modal="true" aria-labelledby="preview-title-h">
     <div class="modal-card wide">
       <header class="modal-header">
-        <h3 id="preview-title">Preview</h3>
+        <h3 id="preview-title-h">Preview</h3>
         <div style="display: flex; gap: 0.5rem;">
           <button class="btn ghost" id="preview-edit">edit</button>
           <button class="btn ghost" id="preview-close">close</button>
@@ -81,10 +92,10 @@
   </div>
 
   <!-- Edit modal -->
-  <div class="modal" id="edit-modal" hidden>
+  <div class="modal" id="edit-modal" hidden role="dialog" aria-modal="true" aria-labelledby="edit-title-h">
     <div class="modal-card">
       <header class="modal-header">
-        <h3 id="edit-title">Edit</h3>
+        <h3 id="edit-title-h">Edit</h3>
         <button class="btn ghost" id="edit-close">close</button>
       </header>
       <div class="modal-body">
@@ -105,11 +116,33 @@
     </div>
   </div>
 
-  <!-- Bulk import modal -->
-  <div class="modal" id="bulk-modal" hidden>
+  <!-- Create new asset modal -->
+  <div class="modal" id="create-modal" hidden role="dialog" aria-modal="true" aria-labelledby="create-title-h">
     <div class="modal-card narrow">
       <header class="modal-header">
-        <h3>Bulk import from repo</h3>
+        <h3 id="create-title-h">Create new asset</h3>
+        <button class="btn ghost" id="create-close">close</button>
+      </header>
+      <div class="modal-body">
+        <label>Name <span class="hint">(lowercase, hyphenated, 2-64 chars)</span></label>
+        <input id="create-name" type="text" placeholder="my-new-skill" />
+        <label>Description</label>
+        <textarea id="create-desc" rows="2" placeholder="What does it do?"></textarea>
+        <label>Tags <span class="hint">(comma-separated, optional)</span></label>
+        <input id="create-tags" type="text" placeholder="utility, claude" />
+        <div class="modal-actions">
+          <button class="btn primary" id="create-go">create</button>
+        </div>
+        <div id="create-result"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk import modal -->
+  <div class="modal" id="bulk-modal" hidden role="dialog" aria-modal="true" aria-labelledby="bulk-title-h">
+    <div class="modal-card narrow">
+      <header class="modal-header">
+        <h3 id="bulk-title-h">Bulk import from repo</h3>
         <button class="btn ghost" id="bulk-close">close</button>
       </header>
       <div class="modal-body">
@@ -122,6 +155,35 @@
           <button class="btn primary" id="bulk-go">import</button>
         </div>
         <div id="bulk-result"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trash modal -->
+  <div class="modal" id="trash-modal" hidden role="dialog" aria-modal="true" aria-labelledby="trash-title-h">
+    <div class="modal-card wide">
+      <header class="modal-header">
+        <h3 id="trash-title-h">Trash</h3>
+        <button class="btn ghost" id="trash-close">close</button>
+      </header>
+      <div class="modal-body">
+        <div id="trash-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation modal -->
+  <div class="modal" id="confirm-modal" hidden role="alertdialog" aria-modal="true" aria-labelledby="confirm-title-h">
+    <div class="modal-card narrow">
+      <header class="modal-header">
+        <h3 id="confirm-title-h">Confirm</h3>
+      </header>
+      <div class="modal-body">
+        <p id="confirm-message" style="margin:0 0 1rem 0;line-height:1.5;"></p>
+        <div class="modal-actions">
+          <button class="btn ghost" id="confirm-no">cancel</button>
+          <button class="btn danger" id="confirm-yes">yes, delete</button>
+        </div>
       </div>
     </div>
   </div>

@@ -114,11 +114,15 @@ if command -v /System/Library/Frameworks/CoreServices.framework/Frameworks/Launc
 fi
 
 echo
-green "✓ Installed."
+green "✓ Installed successfully."
 echo
-echo "  Open Launchpad or Spotlight (⌘+Space) and search 'Claude Control'."
-echo "  Drag the app from ~/Applications/ to your Dock to keep it handy."
+bold "Getting started"
+echo "  1. Open Launchpad or Spotlight (⌘+Space) and search 'Claude Control'."
+echo "  2. Click the icon to launch — the dashboard opens in your browser."
+echo "  3. Drag the app from ~/Applications/ to your Dock to keep it handy."
 echo
-echo "  To uninstall:   $PROJECT_DIR/uninstall-macos.sh"
-echo "  CLI launch:     $PROJECT_DIR/.venv/bin/python $PROJECT_DIR/launcher.py"
+bold "Commands"
+echo "  Uninstall:      bash $PROJECT_DIR/uninstall-macos.sh"
+echo "  Launch via CLI: $PROJECT_DIR/.venv/bin/python $PROJECT_DIR/launcher.py"
 echo "  Stop server:    $PROJECT_DIR/.venv/bin/python $PROJECT_DIR/launcher.py --stop"
+echo "  Run in terminal: cd $PROJECT_DIR && ./run.sh"

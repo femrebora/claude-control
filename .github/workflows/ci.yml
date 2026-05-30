@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -23,10 +23,13 @@ jobs:
           pip install -r requirements.txt -r requirements-dev.txt
       - name: Lint with ruff
         run: ruff check app tests
+      - name: Check formatting with ruff
+        run: ruff format --check --diff app tests
       - name: Run tests
-        run: pytest --cov=app --cov-report=term-missing
+        run: pytest --cov=app --cov-report=term-missing --cov-fail-under=80
   preflight:
     runs-on: ubuntu-latest
+    needs: []
     steps:
       - uses: actions/checkout@v4
       - name: Run preflight (secret scan)
