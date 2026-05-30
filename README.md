@@ -15,13 +15,19 @@ When you start collecting skills, you lose track of what's installed, what's on,
 It runs entirely on your machine. No telemetry, no remote calls, no auth needed because it binds to `127.0.0.1` only.
 
 <p align="center">
-  <img src="assets/claude-control-icon.svg" width="160" alt="claude-control icon" />
+  <img src="assets/claude-control-icon.svg" width="220" alt="claude-control icon" />
 </p>
 
 <h1 align="center">claude-control</h1>
 
 <p align="center">
-  A local desktop-style dashboard for organizing Claude Code plugins, agents, commands, and skills.
+  A small local dashboard for managing your Claude Code skills, plugins, agents, and commands.
+</p>
+
+<p align="center">
+  <img alt="python" src="https://img.shields.io/badge/python-3.10%2B-blue">
+  <img alt="license" src="https://img.shields.io/badge/license-MIT-green">
+  <img alt="platform" src="https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey">
 </p>
 
 ## Features
